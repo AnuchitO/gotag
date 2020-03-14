@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -17,17 +18,22 @@ type Secret struct {
 	Token string `encrypt:"base64"`
 }
 
-func encryptData(user interface{}) {
-	t := reflect.TypeOf(user).Elem()
+func encryptData(val interface{}) error {
+	if reflect.ValueOf(val).Kind() != reflect.Ptr {
+		return errors.New("should pass parameter as a poiter.")
+	}
+
+	t := reflect.TypeOf(val).Elem()
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		if _, ok := field.Tag.Lookup(encrypt); ok {
-			f := reflect.ValueOf(user).Elem().FieldByName(field.Name)
+			f := reflect.ValueOf(val).Elem().FieldByName(field.Name)
 			pwd := f.String()
 			pwdEncoded := base64.StdEncoding.EncodeToString([]byte(pwd))
 			f.SetString(pwdEncoded)
 		}
 	}
+	return nil
 }
 
 func main() {
