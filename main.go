@@ -13,22 +13,27 @@ type User struct {
 	Password string `encrypt:"base64"`
 }
 
-func main() {
-	user := User{
-		Name:     "Nong",
-		Password: "pass1234",
-	}
-
-	t := reflect.TypeOf(user)
+func encryptData(user *User) {
+	t := reflect.TypeOf(user).Elem()
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		if _, ok := field.Tag.Lookup(encrypt); ok {
-			f := reflect.ValueOf(&user).Elem().Field(i)
+			f := reflect.ValueOf(user).Elem().FieldByName(field.Name)
 			pwd := f.String()
 			pwdEncoded := base64.StdEncoding.EncodeToString([]byte(pwd))
 			f.SetString(pwdEncoded)
 		}
 	}
-	fmt.Println(t)
+}
+
+func main() {
+	user := User{
+		Name:     "Nong",
+		Password: "pass1234",
+	}
+	fmt.Println(user)
+
+	encryptData(&user)
+
 	fmt.Println(user)
 }
